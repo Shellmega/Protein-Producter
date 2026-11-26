@@ -4,7 +4,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "demo"))
-from sketch_model import choose_candidate
+from sketch_model import choose_candidate, hydra_path
 
 
 def score(seed, anchor_distance, path_distance, passed=True, rigid_error=3):
@@ -14,6 +14,9 @@ def score(seed, anchor_distance, path_distance, passed=True, rigid_error=3):
 
 
 class SketchSelectionTest(unittest.TestCase):
+    def test_model_path_retains_unicode_and_spaces(self):
+        self.assertEqual(hydra_path(Path("移到 D 盘")/"模型"), '"移到 D 盘/模型"')
+
     def test_better_position_cannot_mask_a_worse_intrinsic_shape(self):
         baseline = score(0, 10, 12)
         self.assertIs(choose_candidate([score(1, 7, 8, rigid_error=4), baseline]), baseline)

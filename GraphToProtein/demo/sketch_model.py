@@ -110,6 +110,11 @@ def choose_candidate(candidates):
     return min(eligible, key=lambda c: (c["mean_distance"], c["path_mean_distance"], c["seed"]))
 
 
+def hydra_path(path):
+    # Hydra accepts quoted Unicode directly and treats JSON's ASCII escapes as literal path text.
+    return json.dumps(path.as_posix(), ensure_ascii=False)
+
+
 def generate(graph, work, status=lambda message: None):
     work = Path(work).resolve()
     condition = condition_for(graph)
@@ -124,7 +129,7 @@ def generate(graph, work, status=lambda message: None):
     # Quote Windows paths for Hydra, including installations in directories with spaces.
     args = [str(runtime.GPU_PYTHON), "-B", str(runtime.ENTRY), "--gtp-upstream", str(runtime.TREE_DSH),
             "--gtp-spec", str(work/"condition.json"), "--gtp-run-record", str(work/"invocation.json"), "--",
-            "inference.output_prefix="+json.dumps((candidates_dir/"backbone").as_posix()), "inference.model_directory_path="+json.dumps(runtime.WEIGHTS.as_posix()),
+            "inference.output_prefix="+hydra_path(candidates_dir/"backbone"), "inference.model_directory_path="+hydra_path(runtime.WEIGHTS),
             "inference.deterministic=True", "inference.design_startnum=0", f"inference.num_designs={CANDIDATES}",
             "inference.write_trajectory=False", "inference.cautious=False", "hydra.run.dir=hydra",
             f"diffuser.T={STEPS}", f"contigmap.contigs=[{LENGTH}-{LENGTH}]",
