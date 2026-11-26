@@ -1,0 +1,7 @@
+**/node_modules/
+**/__pycache__/
+**/local/
+**/dist/
+**/weights/
+**/offline/
+GraphToProtein/GraphToProtein.html

@@ -1,0 +1,17 @@
+import fs from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import ts from "typescript";
+const app = fileURLToPath(new URL("../../", import.meta.url));
+const cfg = ts.readConfigFile(path.join(app, "tsconfig.json"), ts.sys.readFile);
+if (cfg.error) throw Error(ts.flattenDiagnosticMessageText(cfg.error.messageText, "\\n"));
+const parsed = ts.parseJsonConfigFileContent(cfg.config, ts.sys, app);
+const program = ts.createProgram(parsed.fileNames, parsed.options);
+const errors = [...parsed.errors,...ts.getPreEmitDiagnostics(program)];
+if (errors.length) throw Error(ts.formatDiagnostics(errors,{getCurrentDirectory:()=>app,getCanonicalFileName:n=>n,getNewLine:()=>"\\n"}));
+if (program.emit().emitSkipped) throw Error("TypeScript emit failed");
+const vendor = path.join(app,"dist/vendor");
+fs.mkdirSync(vendor,{recursive:true});
+const mol = path.join(app,"node_modules/molstar");
+fs.copyFileSync(path.join(mol,"build/viewer/molstar.js"),path.join(vendor,"molstar.js"));
+fs.copyFileSync(path.join(mol,"LICENSE"),path.join(vendor,"molstar-LICENSE.txt"));

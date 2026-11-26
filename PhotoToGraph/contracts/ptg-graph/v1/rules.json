@@ -1,0 +1,912 @@
+{
+  "package_version": "ptg-graph/1.0-draft.gtp.5",
+  "wire_schema_version": "ptg-graph/1.0",
+  "profile": "protein_open_chain_v1",
+  "producer": "PhotoToGraph",
+  "status": "PROPOSED",
+  "purpose": "Machine-readable companion to spec.md. spec.md is normative for prose semantics; this file is normative for limits, check order, error registry, identity scopes and numeric tolerances so that implementations and tests share one source.",
+  "canonicalization": {
+    "algorithm": "ptg-jcs-1",
+    "specification": "RFC 8785 JSON Canonicalization Scheme",
+    "number_model": "IEEE 754 binary64",
+    "string_serialization": "ECMAScript JSON.stringify (well-formed, ES2019+)",
+    "property_order": "ascending UTF-16 code unit order",
+    "digest": "SHA-256 over the UTF-8 bytes of the canonical serialization",
+    "semantic_projection": [
+      "nodes sorted ascending by node id",
+      "each adjacency neighbour array sorted ascending by node id",
+      "source.reference_image_ids sorted ascending by id",
+      "all remaining member order is positional (nodes index, position component)",
+      "JSON object member order is irrelevant because JCS sorts members"
+    ],
+    "id_order_rule": "node and image ids are restricted to ASCII by limits.id.pattern, so ascending byte order, code point order and UTF-16 code unit order coincide"
+  },
+  "limits": {
+    "id": {
+      "min_length": 1,
+      "max_length": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "case_sensitive": true,
+      "applies_to": [
+        "producer_instance_id",
+        "graph_id",
+        "coordinate_system.frame_id",
+        "nodes[].id",
+        "source.reference_image_ids[]"
+      ]
+    },
+    "revision": {
+      "kind": "mathematical_integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "note": "9007199254740991 is 2^53-1, the largest integer exactly representable in binary64. Gaps are allowed; out-of-order legal revisions are accepted."
+    },
+    "nodes": {
+      "min_count": 2,
+      "max_count": 2048,
+      "position_components": 3,
+      "degree_max": 2,
+      "endpoint_degree": 1
+    },
+    "coordinate": {
+      "component_abs_max": 1000000,
+      "unit": "scene_unit",
+      "note": "Validity bound only; it is not a tolerance. Source coordinates are preserved exactly once accepted."
+    },
+    "coincidence": {
+      "reject_if_euclidean_distance_lte": 1e-06,
+      "unit": "scene_unit",
+      "compare": "level set: distance exactly equal to the threshold is rejected",
+      "normative_rule": {
+        "arithmetic": "IEEE 754 binary64, round to nearest, ties to even",
+        "u": 1.1102230246251565e-16,
+        "tau": 1e-06,
+        "slack_value": 1.0000000000000009,
+        "limit_squared_value": 1.0000000000000008e-12,
+        "candidate_window_value": 1.0000000000000008e-06,
+        "slack_factor": "fl(1 + 8u), computed exactly as 1.0 + 8 * 2^-53",
+        "limit_squared": "fl(fl(tau*tau) * fl(1+8u))",
+        "evaluation": "dx=fl(px-qx), dy=fl(py-qy), dz=fl(pz-qz); s=fl(fl(fl(dx*dx)+fl(dy*dy))+fl(dz*dz)); reject iff s <= limit_squared",
+        "candidate_window": "W=fl(tau*fl(1+8u)); the sweep only visits pairs with |fl(px-qx)| <= W and then applies the same final comparison",
+        "window_proof": "if s <= limit_squared then each rounded square is at most s (the sum of non-negative rounded terms cannot be smaller than any single rounded term), so dx^2 <= s/(1-u) <= tau^2(1+8u)/(1-u); therefore |dx| <= tau*sqrt((1+8u)/(1-u)) < tau(1+8u) = W for the frozen constants, so the candidate window cannot miss a rejectable pair",
+        "reason": "sqrt(dx^2+dy^2+dz^2) of an exact 1e-6 separation can round slightly above the stored threshold double; the directed squared-distance rule makes the inclusive boundary deterministic and language independent"
+      },
+      "why_slack": "without the directed slack the inclusive boundary would be untestable and language dependent; the 8u relative slack (8.881784197001252e-16 = 8 * 2^-53) is far below any user-visible distance",
+      "compatibility_note": "the candidate window was previously +/- tau, which missed the axial nextafter(1e-6,+inf) pair while the diagonal pair was rejected; gtp.3 uses W and rejects both (declared behaviour change R-06)"
+    },
+    "reference_image_ids": {
+      "max_count": 64,
+      "unique": true,
+      "order_semantics": "ignored by semantic comparison"
+    },
+    "body": {
+      "decoded_utf8_bytes_max": 1048576,
+      "encoding_accepted": [
+        "identity"
+      ],
+      "media_type_required": "application/json",
+      "charset_optional": "utf-8",
+      "bom": "rejected"
+    },
+    "idempotency_key": {
+      "min_length": 1,
+      "max_length": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "header": "Idempotency-Key",
+      "single_value_required": true,
+      "scope": "producer_instance_id"
+    },
+    "import_id": {
+      "min_length": 1,
+      "max_length": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "case_sensitive": true,
+      "source": "receipt.schema.json",
+      "note": "R-09d: the receipt schema already constrained import_id; gtp.3 writes the same charset and length into the normative rules and spec 7.4 and adds output boundary examples"
+    },
+    "json": {
+      "depth_max": 64,
+      "duplicate_object_keys": "rejected before the value is inserted into the object",
+      "non_finite_numbers": "rejected",
+      "number_literals": "RFC 8259 grammar, then must be representable as finite binary64 without non-zero underflow to zero"
+    }
+  },
+  "scope_models": {
+    "versions": {
+      "wire": "ptg-graph/1.0 (exact match, no negotiation in v1)",
+      "profile": "protein_open_chain_v1 (exact match)",
+      "package": "ptg-graph/1.0-draft.gtp.5",
+      "jcs": "ptg-jcs-1"
+    },
+    "identity_scopes": {
+      "idempotency_key": [
+        "producer_instance_id",
+        "Idempotency-Key"
+      ],
+      "graph_revision": [
+        "producer_instance_id",
+        "graph_id",
+        "revision"
+      ],
+      "frame": [
+        "producer_instance_id",
+        "graph_id"
+      ]
+    },
+    "conflict_priority": [
+      "IDEMPOTENCY_CONFLICT",
+      "FRAME_CONFLICT",
+      "REVISION_CONFLICT"
+    ],
+    "frame_rule": {
+      "fixed_for": "(producer_instance_id, graph_id)",
+      "redeclaration": "any change to coordinate_system while reusing graph_id is FRAME_CONFLICT",
+      "new_frame": "assign a new graph_id and record the conversion provenance in the producer",
+      "hook": "checked inside the same transaction as key binding and snapshot insert"
+    }
+  },
+  "idempotency_key_lifecycle": {
+    "scope": "(producer_instance_id, Idempotency-Key)",
+    "states": ["unbound", "bound"],
+    "rules": {
+      "pre_validation_failure": {
+        "state": "unbound",
+        "detail": "transport/syntax/version/headers/structure/graph/geometry/topology failure happens before the identity stage; no binding or record exists, so the same key may be reused for a corrected request"
+      },
+      "identity_conflict": {
+        "state": "bound (existing binding unchanged)",
+        "detail": "409 IDEMPOTENCY_CONFLICT/FRAME_CONFLICT/REVISION_CONFLICT does not create a new binding; the existing mapping and snapshot stay untouched"
+      },
+      "transaction_rollback": {
+        "state": "unbound",
+        "detail": "a failed transaction rolls back snapshot, key mapping, revision binding and frame registration together; a retry with the same key and bytes may create the import"
+      },
+      "storage_failure_or_busy": {
+        "state": "unbound unless the commit actually completed",
+        "detail": "500 STORAGE_FAILURE and 503 IMPORT_BUSY send no success receipt; the client retries with the original key and the byte-identical snapshot, and a 200 on retry means the earlier attempt had committed"
+      },
+      "committed_but_receipt_lost": {
+        "state": "bound",
+        "detail": "the commit succeeded; a retry with the same key and the same bytes returns 200 with the same import_id, while the same key with different bytes returns 409"
+      }
+    },
+    "reference_model": "tools/contract/identity.py ReferenceImportStore.key_state / submit_with_rollback / submit_with_lost_receipt",
+    "real_transaction": "NOT_RUN; P5-I owns the database transaction"
+  },
+  "view_transform": {
+    "responsibility": {
+      "owner": "PhotoToGraph producer",
+      "rule": "PTG must fully transform camera, screen/viewport, reference-plane and object-local coordinates into the fixed graph frame before submitting; the wire carries only the resulting XYZ positions, the coordinate_system declaration and the source declaration",
+      "display_state": "camera, viewport, work plane and reference image plane are editor display state only; they must not be sent on the wire and are not part of source_graph, identity or semantic_digest",
+      "no_projection": "three-dimensional information must not be flattened into a 2D representation before submission; a screen-space point is not a valid control point",
+      "edit_rule": "switching the view does not change the source graph; creating or editing a node is a graph edit and must write the actual spatial position into a new revision",
+      "reference_plane": "a reference image plane only provides source provenance (source.reference_image_ids); it does not carry geometry and cannot replace XYZ coordinates"
+    },
+    "wire_fields": ["nodes[].position", "coordinate_system", "source"],
+    "display_only_fields": ["camera", "viewport", "work_plane", "reference_plane"],
+    "acceptance_scenarios": [
+      {"id": "view-state-not-on-wire", "check": "camera/work_plane members are FIELD_UNKNOWN; source_graph has no display state", "evidence": "vectors/view_transform_vectors.json"},
+      {"id": "view-only-change-keeps-identity", "check": "switching camera/viewport/work plane keeps source_graph values, identity and semantic_digest", "evidence": "vectors/view_transform_vectors.json"},
+      {"id": "view-edit-writes-3d-position", "check": "an edit after a view switch creates a new revision with the real 3D position (non-zero Z preserved)", "evidence": "examples/valid-view-edit-nonzero-z.json"},
+      {"id": "view-blank-scene", "check": "a blank scene cannot invent control points", "runtime": "NOT_RUN", "owner": "PTG-1/PTG-2"},
+      {"id": "view-reference-image-plane", "check": "a reference image plane maps to source provenance only", "runtime": "NOT_RUN", "owner": "PTG-1/PTG-2"},
+      {"id": "view-nonunit-object-transform", "check": "a non-unit object transform is applied before submission", "runtime": "NOT_RUN", "owner": "PTG-1/PTG-2"},
+      {"id": "view-ray-no-unique-intersection", "check": "a ray without a unique intersection must not guess coordinates", "runtime": "NOT_RUN", "owner": "PTG-1/PTG-2"}
+    ],
+    "real_ui": "NOT_RUN; PTG-1/PTG-2 execute the real UI scenarios and return fixed-version evidence"
+  },
+  "responsibility": {
+    "browser_matrix": {
+      "owner": "PTG-1 / PTG-4",
+      "status": "NOT_RUN",
+      "acceptance_entry": "PTG-1/PTG-4 browser matrix with fixed versions, address and logs/screenshots returned to GTP"
+    },
+    "three_point_internal_start": {
+      "owner": "PTG-3 / PTG-4",
+      "status": "NOT_RUN",
+      "acceptance_entry": "internal-start counterexample uses a 3-point chain; GTP fixes invalid-internal-start and PTG corrects the wording"
+    },
+    "real_transaction_and_http": {"owner": "GTP P5-I / GTP-I", "status": "NOT_RUN"},
+    "real_ui": {"owner": "PTG-1 / PTG-2", "status": "NOT_RUN"}
+  },
+  "stages": [
+    {
+      "order": 0,
+      "name": "transport",
+      "checks": [
+        "Content-Encoding",
+        "Content-Type",
+        "decoded body byte length",
+        "UTF-8 decode",
+        "byte order mark"
+      ]
+    },
+    {
+      "order": 1,
+      "name": "syntax",
+      "checks": [
+        "strict RFC 8259 grammar",
+        "duplicate object member names",
+        "number representability",
+        "nesting depth"
+      ]
+    },
+    {
+      "order": 2,
+      "name": "version",
+      "checks": [
+        "schema_version",
+        "profile"
+      ]
+    },
+    {
+      "order": 3,
+      "name": "headers",
+      "checks": [
+        "Idempotency-Key presence, length, character set, single header value"
+      ]
+    },
+    {
+      "order": 4,
+      "name": "structure",
+      "checks": [
+        "JSON Schema 2020-12 validation",
+        "unknown member detection",
+        "per-field value domains",
+        "coordinate and count limits"
+      ]
+    },
+    {
+      "order": 5,
+      "name": "graph",
+      "checks": [
+        "node id uniqueness",
+        "adjacency key set equals node id set",
+        "neighbour references exist",
+        "no duplicate neighbours",
+        "no self loops",
+        "adjacency symmetry holds"
+      ]
+    },
+    {
+      "order": 6,
+      "name": "geometry",
+      "checks": [
+        "no pair of control points at or below the coincidence threshold"
+      ]
+    },
+    {
+      "order": 7,
+      "name": "topology",
+      "checks": [
+        "no branch (degree greater than 2)",
+        "connected",
+        "exactly two degree-1 endpoints (open chain, no cycle)",
+        "n_terminal_node is one of the endpoints",
+        "unique N to C path"
+      ]
+    },
+    {
+      "order": 8,
+      "name": "identity",
+      "checks": [
+        "idempotency key scope",
+        "frame registration",
+        "graph revision uniqueness",
+        "conflict priority",
+        "atomic snapshot plus key binding commit"
+      ],
+      "service_only": true,
+      "p0_status": "reference model only; real transaction in P5-I"
+    },
+    {
+      "order": 9,
+      "name": "canonicalize",
+      "checks": [
+        "ptg-jcs-1 canonical serialization",
+        "semantic_digest (SHA-256)"
+      ]
+    }
+  ],
+  "semantic_checks": [
+    {
+      "order": 1,
+      "name": "node_id_unique",
+      "code": "NODE_ID_DUPLICATE",
+      "field": "nodes",
+      "located_by": "node_ids"
+    },
+    {
+      "order": 2,
+      "name": "adjacency_key_set",
+      "code": "ADJACENCY_KEYS",
+      "field": "adjacency",
+      "detail": "unexpected keys first (sorted), then missing node ids (sorted)"
+    },
+    {
+      "order": 3,
+      "name": "neighbour_reference_exists",
+      "code": "UNKNOWN_NODE",
+      "field": "adjacency.<node>[<index>]",
+      "selection": "smallest (referencing node id, unknown neighbour id) pair, independent of the neighbour array order; duplicate occurrences of the selected unknown neighbour use its first index in the original array (R-02)",
+      "located_by": "node_ids = [unknown id, referencing node id] sorted",
+      "equivalence": "reordered neighbour arrays select the same semantic object and report the same code and node_ids; the field index follows the bytes because it is an input location, not part of the error identity"
+    },
+    {
+      "order": 4,
+      "name": "neighbour_not_duplicated",
+      "code": "EDGE_DUPLICATE",
+      "field": "adjacency.<node>",
+      "located_by": "node_ids = [node id, neighbour id] sorted"
+    },
+    {
+      "order": 5,
+      "name": "no_self_loop",
+      "code": "SELF_LOOP",
+      "field": "adjacency.<node>",
+      "located_by": "node_ids = [node id]"
+    },
+    {
+      "order": 6,
+      "name": "adjacency_symmetric",
+      "code": "ADJACENCY_ASYMMETRIC",
+      "field": "adjacency.<node>",
+      "located_by": "node_ids = [node id, neighbour id] sorted"
+    },
+    {
+      "order": 7,
+      "name": "no_coincident_control_points",
+      "code": "COINCIDENT_NODES",
+      "field": "nodes",
+      "located_by": "node_ids = [id a, id b] sorted by id order of the visited pair"
+    },
+    {
+      "order": 8,
+      "name": "no_branch",
+      "code": "GRAPH_BRANCH",
+      "field": "adjacency.<node>",
+      "located_by": "node_ids = [node id]"
+    },
+    {
+      "order": 9,
+      "name": "connected",
+      "code": "GRAPH_DISCONNECTED",
+      "field": "adjacency",
+      "located_by": "node_ids = sorted unreachable node ids"
+    },
+    {
+      "order": 10,
+      "name": "open_chain_not_cycle",
+      "code": "GRAPH_CYCLE",
+      "field": "adjacency",
+      "located_by": "node_ids = [smallest node id]"
+    },
+    {
+      "order": 11,
+      "name": "n_terminal_is_endpoint",
+      "code": "N_TERMINAL_INVALID",
+      "field": "n_terminal_node",
+      "located_by": "node_ids = [n_terminal_node]"
+    }
+  ],
+  "schema_error_map": [
+    {
+      "match_field": "nodes[*].position[*]",
+      "keywords": [
+        "minimum",
+        "maximum"
+      ],
+      "code": "COORDINATE_INVALID"
+    },
+    {
+      "match_field": "nodes",
+      "keywords": [
+        "minItems",
+        "maxItems"
+      ],
+      "code": "NODE_COUNT_LIMIT"
+    },
+    {
+      "match_field": "*",
+      "keywords": [
+        "additionalProperties"
+      ],
+      "code": "FIELD_UNKNOWN"
+    },
+    {
+      "match_field": "*",
+      "keywords": [
+        "type",
+        "const",
+        "required",
+        "minLength",
+        "maxLength",
+        "pattern",
+        "minItems",
+        "maxItems",
+        "uniqueItems",
+        "minimum",
+        "maximum",
+        "multipleOf",
+        "minProperties",
+        "maxProperties"
+      ],
+      "code": "FIELD_INVALID"
+    }
+  ],
+  "first_error_scope": {
+    "structure": "field_order, then error code priority, then field text (rules.field_rank / rules.error_sort_key)",
+    "graph_geometry_topology": "semantic_checks order; inside one check the check's own stable semantic-object selection decides which error is first. field_order does not apply to these stages (R-07)",
+    "identity": "conflict_priority: IDEMPOTENCY_CONFLICT -> FRAME_CONFLICT -> REVISION_CONFLICT",
+    "field_identity": "for graph/geometry/topology the reported field is the location in the original input; the semantic identity of an error is (code, node_ids, selected semantic object). Array reordering can move field while code/node_ids stay stable (R-02)",
+    "pair_order": "reported node_ids are sorted ascending and de-duplicated"
+  },
+  "error_stage_policy": {
+    "reported_stage": "the stage that actually failed in this validation run (R-10)",
+    "registry_stage": "the allowed stage set for the code; JSON_SYNTAX is shared by transport (UTF-8/BOM) and syntax (RFC 8259) and is therefore registered as transport|syntax",
+    "wire_projection": "the wire error document never contains stage; the tool report keeps it for diagnostics only",
+    "shared_code_examples": [
+      "invalid-bom / invalid-utf8 -> JSON_SYNTAX with reported stage transport",
+      "invalid-nan / invalid-json-trailing-comma -> JSON_SYNTAX with reported stage syntax"
+    ]
+  },
+  "validation_modes": {
+    "full": {
+      "purpose": "complete import request",
+      "headers": "Idempotency-Key is mandatory; absence is IDEMPOTENCY_KEY_INVALID at the headers stage",
+      "identity_stage": "service-only hand-off; the CLI reports it SKIPPED",
+      "service_status": "http_status 201 (candidate; 200 for an existing equivalent import)",
+      "callers": "public CLI default; tools.validation.validate_import default; future P5-I HTTP entry"
+    },
+    "graph": {
+      "purpose": "explicit pure graph validation",
+      "headers": "request headers are outside scope; an absent key makes the headers stage SKIPPED",
+      "identity_stage": "outside scope",
+      "service_status": "no service status claimed; http_status is null",
+      "callers": "library/test callers that validate graph content only; must select this mode explicitly (CLI --mode graph)"
+    },
+    "migration": "the legacy require_idempotency_key flag is kept as an alias (True -> full, False -> graph); gtp.3 makes the default full for the public CLI and the application entry so a complete request cannot silently skip the mandatory header"
+  },
+  "field_order": [
+    "$",
+    "schema_version",
+    "profile",
+    "producer",
+    "producer_instance_id",
+    "graph_id",
+    "revision",
+    "source",
+    "source.kind",
+    "source.reference_image_ids",
+    "coordinate_system",
+    "coordinate_system.frame_id",
+    "coordinate_system.dimension",
+    "coordinate_system.unit",
+    "coordinate_system.handedness",
+    "coordinate_system.axes",
+    "nodes",
+    "nodes[*].id",
+    "nodes[*].position",
+    "nodes[*].position[*]",
+    "adjacency",
+    "adjacency.*",
+    "adjacency.*[*]",
+    "n_terminal_node",
+    "headers.Idempotency-Key"
+  ],
+  "error_registry": [
+    {
+      "code": "JSON_SYNTAX",
+      "http": 400,
+      "stage": "transport|syntax",
+      "priority": 10,
+      "summary": "body is not strict UTF-8 RFC 8259 JSON"
+    },
+    {
+      "code": "DUPLICATE_JSON_KEY",
+      "http": 400,
+      "stage": "syntax",
+      "priority": 11,
+      "summary": "an object member name occurs twice"
+    },
+    {
+      "code": "NUMBER_NOT_REPRESENTABLE",
+      "http": 400,
+      "stage": "syntax",
+      "priority": 12,
+      "summary": "number literal overflows binary64 or underflows non-zero to zero",
+      "added_in": "ptg-graph/1.0-draft.gtp.2"
+    },
+    {
+      "code": "BODY_TOO_DEEP",
+      "http": 400,
+      "stage": "syntax",
+      "priority": 13,
+      "summary": "JSON nesting depth exceeds the contract limit",
+      "added_in": "ptg-graph/1.0-draft.gtp.2"
+    },
+    {
+      "code": "CONTENT_ENCODING_UNSUPPORTED",
+      "http": 415,
+      "stage": "transport",
+      "priority": 14,
+      "summary": "Content-Encoding is not identity"
+    },
+    {
+      "code": "UNSUPPORTED_MEDIA_TYPE",
+      "http": 415,
+      "stage": "transport",
+      "priority": 15,
+      "summary": "Content-Type is not application/json with an optional utf-8 charset"
+    },
+    {
+      "code": "BODY_TOO_LARGE",
+      "http": 413,
+      "stage": "transport",
+      "priority": 16,
+      "summary": "decoded request body exceeds the frozen byte limit"
+    },
+    {
+      "code": "SCHEMA_UNSUPPORTED",
+      "http": 400,
+      "stage": "version",
+      "priority": 20,
+      "summary": "schema_version is not the frozen wire version"
+    },
+    {
+      "code": "PROFILE_UNSUPPORTED",
+      "http": 400,
+      "stage": "version",
+      "priority": 21,
+      "summary": "profile is not protein_open_chain_v1"
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_INVALID",
+      "http": 400,
+      "stage": "headers",
+      "priority": 22,
+      "summary": "Idempotency-Key header is absent, repeated or malformed"
+    },
+    {
+      "code": "FIELD_INVALID",
+      "http": 422,
+      "stage": "structure",
+      "priority": 30,
+      "summary": "a structural field is missing, has the wrong type, wrong constant or violates its value domain"
+    },
+    {
+      "code": "FIELD_UNKNOWN",
+      "http": 422,
+      "stage": "structure",
+      "priority": 31,
+      "summary": "an unknown member is present; the error field keeps its own path",
+      "added_in": "ptg-graph/1.0-draft.gtp.2"
+    },
+    {
+      "code": "COORDINATE_INVALID",
+      "http": 422,
+      "stage": "structure",
+      "priority": 32,
+      "summary": "a coordinate component exceeds the absolute limit"
+    },
+    {
+      "code": "NODE_COUNT_LIMIT",
+      "http": 422,
+      "stage": "structure",
+      "priority": 33,
+      "summary": "node count is outside 2-2048"
+    },
+    {
+      "code": "NODE_ID_DUPLICATE",
+      "http": 422,
+      "stage": "graph",
+      "priority": 40,
+      "summary": "a node id occurs more than once"
+    },
+    {
+      "code": "ADJACENCY_KEYS",
+      "http": 422,
+      "stage": "graph",
+      "priority": 41,
+      "summary": "adjacency key set does not equal the node id set"
+    },
+    {
+      "code": "UNKNOWN_NODE",
+      "http": 422,
+      "stage": "graph",
+      "priority": 42,
+      "summary": "a neighbour id does not name a node"
+    },
+    {
+      "code": "EDGE_DUPLICATE",
+      "http": 422,
+      "stage": "graph",
+      "priority": 43,
+      "summary": "a neighbour id occurs twice in one adjacency array"
+    },
+    {
+      "code": "SELF_LOOP",
+      "http": 422,
+      "stage": "graph",
+      "priority": 44,
+      "summary": "a node lists itself as neighbour"
+    },
+    {
+      "code": "ADJACENCY_ASYMMETRIC",
+      "http": 422,
+      "stage": "graph",
+      "priority": 45,
+      "summary": "an edge is not present in both directions"
+    },
+    {
+      "code": "COINCIDENT_NODES",
+      "http": 422,
+      "stage": "geometry",
+      "priority": 50,
+      "summary": "two control points are at or below the coincidence threshold"
+    },
+    {
+      "code": "GRAPH_BRANCH",
+      "http": 422,
+      "stage": "topology",
+      "priority": 60,
+      "summary": "a node has degree greater than 2"
+    },
+    {
+      "code": "GRAPH_DISCONNECTED",
+      "http": 422,
+      "stage": "topology",
+      "priority": 61,
+      "summary": "the graph has more than one connected component"
+    },
+    {
+      "code": "GRAPH_CYCLE",
+      "http": 422,
+      "stage": "topology",
+      "priority": 62,
+      "summary": "the graph is a closed cycle instead of an open chain"
+    },
+    {
+      "code": "N_TERMINAL_INVALID",
+      "http": 422,
+      "stage": "topology",
+      "priority": 63,
+      "summary": "n_terminal_node is unknown or not a degree-1 endpoint"
+    },
+    {
+      "code": "IDEMPOTENCY_CONFLICT",
+      "http": 409,
+      "stage": "identity",
+      "priority": 70,
+      "summary": "the same scoped idempotency key was bound to different canonical content"
+    },
+    {
+      "code": "FRAME_CONFLICT",
+      "http": 409,
+      "stage": "identity",
+      "priority": 71,
+      "summary": "graph_id was registered with a different coordinate system declaration"
+    },
+    {
+      "code": "REVISION_CONFLICT",
+      "http": 409,
+      "stage": "identity",
+      "priority": 72,
+      "summary": "the same graph revision already exists with different canonical content"
+    },
+    {
+      "code": "IMPORT_NOT_FOUND",
+      "http": 404,
+      "stage": "identity",
+      "priority": 73,
+      "summary": "import_id is unknown"
+    },
+    {
+      "code": "STORAGE_FAILURE",
+      "http": 500,
+      "stage": "identity",
+      "priority": 80,
+      "summary": "persistence failed; no success receipt may be sent"
+    },
+    {
+      "code": "INTERNAL_ERROR",
+      "http": 500,
+      "stage": "identity",
+      "priority": 81,
+      "summary": "unexpected server failure"
+    },
+    {
+      "code": "IMPORT_BUSY",
+      "http": 503,
+      "stage": "identity",
+      "priority": 82,
+      "summary": "transaction conflict retries exhausted; the same key may be retried"
+    },
+    {
+      "code": "RATE_LIMITED",
+      "http": 429,
+      "stage": "identity",
+      "priority": 83,
+      "summary": "deployment-level rate limit; honour Retry-After",
+      "added_in": "ptg-graph/1.0-draft.gtp.2",
+      "note": "reserved: P0 does not require a local single-user server to enforce rate limits, but the client rule is frozen"
+    },
+    {
+      "code": "PRECISION_LIMIT",
+      "http": 422,
+      "stage": "derivation",
+      "priority": 90,
+      "summary": "derived similarity transform cannot round-trip local geometry within the frozen tolerance; the source graph is preserved",
+      "wire": false,
+      "owner": "P3 / P4-I",
+      "note": "derivation-stage code, not part of the PTG import error registry"
+    },
+    {
+      "code": "DERIVATION_INVALID",
+      "http": 422,
+      "stage": "derivation",
+      "priority": 91,
+      "summary": "the requested derived transform is not a proper similarity transform (reflection, non-uniform or non-positive scale)",
+      "wire": false,
+      "owner": "P3 / P4-I",
+      "added_in": "ptg-graph/1.0-draft.gtp.2",
+      "note": "derivation-stage code, not part of the PTG import error registry"
+    }
+  ],
+  "tolerances": {
+    "source_graph": {
+      "kind": "exact",
+      "absolute": 0,
+      "rule": "accepted and re-read source coordinates compare exactly component by component as binary64 values (IEEE 754 value equality, where -0 equals 0); a change of any single component is a content change",
+      "why": "content identity must not depend on a tolerance; otherwise a small but real edit inside a large coordinate frame can be mistaken for a repeat submission"
+    },
+    "derived_transform": {
+      "kind": "absolute_error_bound",
+      "unit": "scene_unit",
+      "unit_roundoff_u": 1.1102230246251565e-16,
+      "gamma_order": 10,
+      "formula_forward": "bound_fwd(p) = gamma * (abs(s) * sqrt(3) * (A(p) + A(c)) + A(t)) + abs(s) * eps_R * (A(p) + A(c))",
+      "formula_inverse": "bound_inv(m) = gamma * (sqrt(3) * (A(m) + A(t)) / abs(s) + A(c)) + eps_R * (A(m) + A(t)) / abs(s)",
+      "formula_round_trip": "bound_rt(p) = bound_fwd(p) + bound_inv(m)",
+      "notation": "A(x) = max(abs(x1),abs(x2),abs(x3)); gamma = 10*u/(1-10*u); eps_R = max abs component of (R^T R - I), the orthogonality residual of the stored rotation; sqrt(3) bounds the infinity norm of a proper rotation row",
+      "rotation_residual": {
+        "definition": "eps_R = max abs component of (R^T R - I); eps_det = abs(det(R) - 1)",
+        "residual_max": 7.105427357601002e-15,
+        "residual_max_rule": "eps_R <= 64*u and eps_det <= 64*u, where u = 2^-53; a stored rotation above the limit is rejected with DERIVATION_INVALID instead of biasing the mapping",
+        "why": "the map uses the stored matrix, not an ideal rotation, so the residual contributes |s| * eps_R * |p - c| to the forward error and eps_R * |m - t| / |s| to the inverse error; the term is included in both bounds so any accepted matrix keeps the bound conservative",
+        "included_in_bounds": true
+      },
+      "operation_accounting": "forward: 1 subtraction, 3 products and 2 sums for R*d, 1 scale, 1 translation sum = 8 roundings; gamma order 10 adds a 2-operation safety margin; inverse uses the same accounting with the division by s",
+      "forward_map": "p_model = s * R * (p_source - c) + t",
+      "inverse_map": "p_source = c + transposed(R) * (p_model - t) / s",
+      "constraints": "s > 0, transposed(R) * R = identity, det(R) = +1",
+      "acceptance": "measured absolute error per component must be less than or equal to the bound computed from the actual inputs",
+      "precision_limit_rule": "derivation is rejected with PRECISION_LIMIT when bound_rt exceeds precision_limit_ratio * L_min, where L_min is the smallest distance between two distinct source control points and precision_limit_ratio is frozen below",
+      "precision_limit_ratio": 0.001
+    },
+    "non_coplanarity": {
+      "unit": "dimensionless",
+      "raw_measure": "V = (p2-p1) . ((p3-p1) x (p4-p1)), six times the signed tetrahedron volume for four control points",
+      "normalized_measure": "Vhat = V / (|p2-p1| * |p3-p1| * |p4-p1|), in [-1, 1]",
+      "stable_threshold": 1e-09,
+      "roundoff_bound": "absolute uncertainty of Vhat is below 1e-14 for the supported coordinate range, leaving more than four orders of magnitude of margin to the stable threshold",
+      "stable_rule": "handedness (sign of V) is only asserted when abs(Vhat) > stable_threshold",
+      "degenerate_rule": "abs(Vhat) <= stable_threshold marks the path as degenerate (near planar or collinear); the input stays valid, the degenerate flag is reported and chirality is not asserted",
+      "scale_rule": "Vhat is invariant under translation, proper rotation and positive uniform scaling; V scales with s^3",
+      "order_rule": "V is computed on the N to C path order. Reversing the whole path is an even permutation of the four vertices, so V keeps its sign: the path direction is a separate attribute and direction sensitive quantities (tangent, signed torsion) must be defined on the ordered path. A reflection (det(R) = -1) flips the sign of V, which is how a left handed frame is detected.",
+      "reflection_rule": "det(R) = -1 flips the sign of V; derivation rejects improper transforms with DERIVATION_INVALID"
+    },
+    "withdrawn": {
+      "formula": "1e-9 * max(1, max_abs_coordinate)",
+      "status": "WITHDRAWN",
+      "withdrawn_in": "ptg-graph/1.0-draft.gtp.2",
+      "reason": "the bound grows with coordinate magnitude, so at the supported maximum of 1e6 scene_unit it permits 1e-3 scene_unit of deviation, which is 1000 times the coincidence threshold and can mask a real small edit or a small Z displacement",
+      "counterexample": {
+        "base_position": [
+          1000000.0,
+          1000000.0,
+          0.0
+        ],
+        "variant_position": [
+          1000000.0,
+          1000000.0,
+          0.0001
+        ],
+        "movement": 0.0001,
+        "validity": "the two points are distinct and above the 1e-6 coincidence threshold, so the variant is a legal new revision",
+        "old_effect": "0.0001 is smaller than the withdrawn tolerance 1e-3, so the edit could be treated as a repeat",
+        "new_effect": "source coordinates compare exactly, so the semantic_digest differs and the change is detected"
+      }
+    }
+  },
+  "derived_versions": {
+    "source_graph": {
+      "identity": "producer_instance_id + graph_id + revision; import_id assigned by the receiver",
+      "mutable": false,
+      "note": "exact accepted snapshot; never edited in place"
+    },
+    "derived_draft": {
+      "identity": "draft_id + draft_revision, linked to import_id",
+      "mutable": true,
+      "edits": "every edit produces a new draft_revision",
+      "config_lives_here": [
+        "target_residue_count",
+        "chain_order",
+        "derived_transform",
+        "curve and sampling parameters"
+      ]
+    },
+    "model_condition": {
+      "identity": "condition_id + adapter_version",
+      "mutable": false,
+      "pins": [
+        "import_id",
+        "draft_id and draft_revision",
+        "chain_order",
+        "target_residue_count",
+        "derived_transform and its inverse",
+        "units (scene_unit and Angstrom)",
+        "adapter parameters"
+      ]
+    },
+    "target_residue_count": {
+      "status": "GTP configuration representation only",
+      "facets": {
+        "minimum": 1,
+        "maximum": null,
+        "maximum_status": "DEFERRED to G0/P3 model capability evidence",
+        "integer": true
+      },
+      "note": "P0 fixes the representation and refuses to invent a model limit; the precedented range stays NOT_RUN until G0/P3 evidence exists"
+    }
+  },
+  "deployment": {
+    "status": "PLANNED",
+    "runtime_status": "NOT_RUN",
+    "receiver_base_url": "http://127.0.0.1:8000",
+    "post_path": "/api/v1/sketch-imports",
+    "get_path": "/api/v1/sketch-imports/{import_id}",
+    "allowed_origins": [
+      "http://127.0.0.1:5173"
+    ],
+    "preflight": "OPTIONS with Access-Control-Allow-Origin, Access-Control-Allow-Methods GET/POST/OPTIONS, Access-Control-Allow-Headers Content-Type/Idempotency-Key, Access-Control-Max-Age 600",
+    "session": "loopback bind, single local user, no cookie session",
+    "storage": "SQLite, candidate; final path and transaction settings frozen in P5-I",
+    "retry_policy": {
+      "automatic_attempts_max": 5,
+      "backoff_seconds": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "backoff_max_seconds": 30,
+      "retry_on": [
+        503,
+        429,
+        "network error with unknown outcome",
+        "timeout with unknown outcome"
+      ],
+      "no_auto_retry_on": [
+        400,
+        404,
+        409,
+        413,
+        415,
+        422,
+        500
+      ],
+      "http_500_rule": {
+        "client_state": "rejected",
+        "auto_retry": false,
+        "meaning": "definite failure with no success receipt (persistence did not report success)",
+        "manual_retry": "the user may retry explicitly, and the retry must reuse the original Idempotency-Key and the byte identical snapshot; a 200 on retry means the earlier attempt had committed (converge to confirmed), a 201 means this attempt succeeded",
+        "source_graph": "the source graph is preserved and is not modified by a failed storage attempt"
+      },
+      "retry_requires": "the identical original Idempotency-Key and the byte-identical original snapshot",
+      "retry_after": "honour Retry-After when present on 429 or 503",
+      "unknown_outcome_state": "PTG keeps the submission in 'result pending' and reconciles with the same key or with GET once the receipt or import id is known"
+    }
+  }
+}

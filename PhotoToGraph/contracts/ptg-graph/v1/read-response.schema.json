@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gtp.local/contracts/ptg-graph/1.0/read-response.schema.json",
+  "title": "ptg-graph read response (GET /api/v1/sketch-imports/{import_id})",
+  "description": "200 读取结构。receipt 与 source_graph 均为必填。source_graph 是首次成功接受的完整解析快照，按 JSON 语义返回：坐标数值、来源与框架保持，数值序列化字面形式可变（例如 7.0 与 7、-0 与 0 收敛）。原始 body 字节另作证据保存。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt",
+    "source_graph"
+  ],
+  "properties": {
+    "receipt": {
+      "$ref": "receipt.schema.json",
+      "description": "该导入的回执；绑定其所保存的源图修订。"
+    },
+    "source_graph": {
+      "$ref": "request.schema.json",
+      "description": "首次成功接受并保存的源图快照。"
+    }
+  }
+}

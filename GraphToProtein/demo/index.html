@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f5f4ed">
+<title>空间描点 · PTG × GTP</title>
+<link rel="stylesheet" href="showcase.css">
+</head>
+<body data-ingress="{{IMPORT}}" data-tasks="{{TASK}}" data-mode="draw">
+<header class="bar"><div class="wordmark"><i aria-hidden="true"></i>PTG <span>×</span> GTP</div>
+<nav class="tools" aria-label="工作模式">
+<button type="button" id="developer-mode" aria-pressed="false">开发者模式</button></nav></header>
+<main>
+<section class="intro"><div><h1 id="headline">画一条空间折线<span>。</span></h1>
+<p id="instruction">正面描轮廓，切到侧面左右拖动一个点，就能改它的深度。</p></div>
+<div class="tools" id="edit-tools"><button id="photo" type="button">＋ 参考图</button>
+<input type="file" accept="image/png,image/jpeg" id="file" hidden>
+<button id="undo" type="button" disabled>↶ 撤销</button></div></section>
+<section class="instrument" aria-label="描点与结构">
+<div id="stage">
+<canvas id="drawing" tabindex="0" aria-label="三维描点。点击空白加点，拖动点编辑，拖动空白旋转。键盘方向键移动光标，空格加点，方括号切换选点，按住 Shift 用方向键移动选点。"></canvas>
+<div id="model" hidden><canvas aria-label="三维蛋白结构，拖动旋转"></canvas></div>
+<span class="stage-label" id="stage-label">折线画布</span>
+<span class="stage-count" id="count">0 个点</span>
+<div class="views" id="views" role="group" aria-label="画布视角">
+<button type="button" data-view="front" aria-pressed="true">正面</button>
+<button type="button" data-view="side" aria-pressed="false">侧面</button>
+<button type="button" data-view="orbit" aria-pressed="false">立体</button></div>
+<div id="busy" hidden aria-live="polite"><i></i><span id="busy-text"></span></div>
+</div>
+<div class="tray"><div class="message"><strong id="hint" aria-live="polite">点下第一个点</strong><small id="note">演示模式会返回固定的蛋白质结构。</small></div>
+<div class="actions"><button type="button" id="back" hidden>再画一次</button><a class="primary" id="download" download="ptg-gtp-demo.pdb" hidden>下载 PDB ↓</a>
+<a id="saved" data-developer hidden>打开已存草图 ↗</a>
+<button class="primary" id="reveal" type="button" aria-describedby="hint note" disabled>一键生产蛋白质</button></div></div>
+</section>
+<section class="reopen" id="reopen" hidden aria-labelledby="reopen-heading">
+<h2 id="reopen-heading">已保存的草图</h2>
+<p class="reopen-hint" id="reopen-hint">有上次结果的草图可直接查看结果和它对应的草图版本，全程只读。<span data-developer>选“去创建生成任务”可进入这张草图的任务创建区。</span>尚无结果时，仍可打开最新修订继续绘图。</p>
+<p class="reopen-note" id="reopen-note" hidden role="status"></p>
+<ul class="reopen-list" id="reopen-list"></ul>
+</section>
+<p class="sample-link"><a href="/viewer/?candidate=p2-r2-curve-plus-seed0">查看固定蛋白样本 ↗</a></p>
+<noscript>请启用 JavaScript 以使用描点画布。</noscript></main>
+<script type="module" src="showcase.js"></script></body></html>

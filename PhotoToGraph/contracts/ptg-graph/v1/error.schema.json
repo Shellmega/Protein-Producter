@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gtp.local/contracts/ptg-graph/1.0/error.schema.json",
+  "title": "ptg-graph error response",
+  "description": "错误响应结构。code 为稳定机器标识，取自 error_registry 的 wire 错误码；message 为中文解释；node_ids 为受影响结点 ID，无结点时为空数组；field 使用规范的字段路径，根问题为 $，头问题为 headers.Idempotency-Key。同一层级首错确定，多个错误时按检查阶段与字段顺序选择首个。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "error"
+  ],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "message",
+        "node_ids",
+        "field"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "JSON_SYNTAX",
+            "DUPLICATE_JSON_KEY",
+            "NUMBER_NOT_REPRESENTABLE",
+            "BODY_TOO_DEEP",
+            "CONTENT_ENCODING_UNSUPPORTED",
+            "UNSUPPORTED_MEDIA_TYPE",
+            "BODY_TOO_LARGE",
+            "SCHEMA_UNSUPPORTED",
+            "PROFILE_UNSUPPORTED",
+            "IDEMPOTENCY_KEY_INVALID",
+            "FIELD_INVALID",
+            "FIELD_UNKNOWN",
+            "COORDINATE_INVALID",
+            "NODE_COUNT_LIMIT",
+            "NODE_ID_DUPLICATE",
+            "ADJACENCY_KEYS",
+            "UNKNOWN_NODE",
+            "EDGE_DUPLICATE",
+            "SELF_LOOP",
+            "ADJACENCY_ASYMMETRIC",
+            "COINCIDENT_NODES",
+            "GRAPH_BRANCH",
+            "GRAPH_DISCONNECTED",
+            "GRAPH_CYCLE",
+            "N_TERMINAL_INVALID",
+            "IDEMPOTENCY_CONFLICT",
+            "FRAME_CONFLICT",
+            "REVISION_CONFLICT",
+            "IMPORT_NOT_FOUND",
+            "STORAGE_FAILURE",
+            "INTERNAL_ERROR",
+            "IMPORT_BUSY",
+            "RATE_LIMITED"
+          ],
+          "description": "wire 错误码枚举；PRECISION_LIMIT 属于派生阶段，不在导入 wire 注册表内。"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "中文解释，可含结点 ID 与数值；不得承载机器判断。"
+        },
+        "node_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 2048,
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "description": "受影响结点 ID，按字典序稳定排序；无对应结点时为空数组。"
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "description": "字段路径，例如 nodes[0].position、adjacency.n2、revision、$、headers.Idempotency-Key。"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@gtp/import-preview",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "GTP P4-I import preview and derived draft editor (browser client for gtp-import-preview/1.0)",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "node tools/compile/build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "molstar": "5.13.0",
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.2",
+    "@types/three": "0.187.0",
+    "playwright-core": "1.65.0",
+    "typescript": "5.9.3"
+  }
+}

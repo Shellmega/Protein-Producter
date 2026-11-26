@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gtp.local/contracts/ptg-graph/1.0/request.schema.json",
+  "title": "ptg-graph request (wire ptg-graph/1.0, profile protein_open_chain_v1)",
+  "description": "结构、类型、常量、标识符字符集与单字段值域。跨字段一致性、邻接对称、连通性、路径顺序与几何规则由 spec.md 的语义检查覆盖，不由本 schema 表达。未知成员一律拒绝。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile",
+    "producer",
+    "producer_instance_id",
+    "graph_id",
+    "revision",
+    "source",
+    "coordinate_system",
+    "nodes",
+    "adjacency",
+    "n_terminal_node"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ptg-graph/1.0",
+      "description": "wire 版本，精确匹配；未知值在 structure 之前按 SCHEMA_UNSUPPORTED 处理。"
+    },
+    "profile": {
+      "const": "protein_open_chain_v1",
+      "description": "首版唯一 profile：单条开放链。"
+    },
+    "producer": {
+      "const": "PhotoToGraph",
+      "description": "首版唯一生产者。"
+    },
+    "producer_instance_id": {
+      "$ref": "#/$defs/id",
+      "description": "PTG 实例标识，随项目持久化；幂等键的作用域之一。"
+    },
+    "graph_id": {
+      "$ref": "#/$defs/id",
+      "description": "源图标识；与 producer_instance_id 共同固定坐标框架声明。"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "数学整数修订号，范围 1..2^53-1；允许跳号与乱序到达。"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "reference_image_ids"
+      ],
+      "properties": {
+        "kind": {
+          "const": "interactive_3d",
+          "description": "首版唯一来源种类：PTG 三维交互建图。"
+        },
+        "reference_image_ids": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "description": "参考图标识，仅用于来源说明；几何由坐标框架表达，顺序在语义比较中忽略。"
+        }
+      }
+    },
+    "coordinate_system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_id",
+        "dimension",
+        "unit",
+        "handedness",
+        "axes"
+      ],
+      "properties": {
+        "frame_id": {
+          "$ref": "#/$defs/id",
+          "description": "图坐标框架标识；同 graph_id 下不得重定义。"
+        },
+        "dimension": {
+          "const": 3,
+          "description": "首版固定三维。"
+        },
+        "unit": {
+          "const": "scene_unit",
+          "description": "设计单位；不是物理 Å，物理尺度转换在 P3。"
+        },
+        "handedness": {
+          "const": "right",
+          "description": "右手坐标框架；反射变换不被支持。"
+        },
+        "axes": {
+          "const": "xyz",
+          "description": "轴向固定为 +X 右、+Y 上、+Z 朝观察者。"
+        }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "position"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id",
+            "description": "稳定结点标识，图内唯一（唯一性由语义检查覆盖）；用于路径与排序。"
+          },
+          "position": {
+            "type": "array",
+            "minItems": 3,
+            "maxItems": 3,
+            "items": {
+              "type": "number",
+              "minimum": -1000000,
+              "maximum": 1000000
+            },
+            "description": "三个有限的 binary64 分量，单位 scene_unit，分量顺序 x,y,z。"
+          }
+        }
+      },
+      "description": "控制点表；数组顺序仅用于序列化，不属于语义。"
+    },
+    "adjacency": {
+      "type": "object",
+      "minProperties": 2,
+      "maxProperties": 2048,
+      "propertyNames": {
+        "$ref": "#/$defs/id"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/id"
+        },
+        "description": "该结点的邻居表；必须与结点集合一致、存在、去重、无自环且双向对称（语义检查）。度不得大于 2（语义检查 GRAPH_BRANCH）。"
+      },
+      "description": "邻接字典；键集合必须恰等于结点 ID 集合。"
+    },
+    "n_terminal_node": {
+      "$ref": "#/$defs/id",
+      "description": "N 端起点；必须是度为 1 的端点，据此唯一确定 N→C 顺序。"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "description": "标识符：1—128 个字符，首字符为 ASCII 字母或数字，其余为字母、数字、点、下划线或连字符；大小写敏感。"
+    }
+  }
+}

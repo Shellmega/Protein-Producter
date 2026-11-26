@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gtp.local/contracts/ptg-graph/1.0/receipt.schema.json",
+  "title": "ptg-graph import receipt",
+  "description": "201 与 200 共用的回执结构。回执绑定所接收源图的修订，不表示派生配置或生成已完成。node_count 为结点数，edge_count 为无向边数；对合法开放链应有 edge_count = node_count - 1，该跨字段一致性由语义规则覆盖，不在本 schema 内表达。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "import_id",
+    "schema_version",
+    "producer_instance_id",
+    "graph_id",
+    "revision",
+    "status",
+    "node_count",
+    "edge_count"
+  ],
+  "properties": {
+    "import_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+      "description": "接收端生成的导入标识，首次导入时分配并保持稳定。"
+    },
+    "schema_version": {
+      "const": "ptg-graph/1.0",
+      "description": "被接收快照的 wire 版本。"
+    },
+    "producer_instance_id": {
+      "$ref": "#/$defs/id",
+      "description": "来源实例，与请求一致。"
+    },
+    "graph_id": {
+      "$ref": "#/$defs/id",
+      "description": "来源图标识，与请求一致。"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991,
+      "description": "本回执对应的源图修订。"
+    },
+    "status": {
+      "const": "imported_needs_configuration",
+      "description": "首版唯一导入状态：源图已可靠保存，尚待 GTP 配置目标残基数等派生信息。"
+    },
+    "node_count": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2048,
+      "description": "已保存源图的结点数。"
+    },
+    "edge_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2047,
+      "description": "已保存源图的无向边数；每条无向边只计一次。"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    }
+  }
+}
