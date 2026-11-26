@@ -26,6 +26,7 @@
   "env/SE3Transformer/se3_transformer/runtime/metrics.py": "1a69a64dc782ce2c47faabd5cee21e422d9406f4711df138a336a9f88f34fb7c",
   "env/SE3Transformer/se3_transformer/runtime/training.py": "bc487702d4ce6c09ea1511ee50de5d22ea23471ae8d1c1f5029993793f4039d6",
   "env/SE3Transformer/se3_transformer/runtime/utils.py": "7a2e1cd12542b6ac8b628e61ef065f835f2ee18cf127f01b1150bfa1bf493fc1",
+  "examples/input_pdbs/1qys.pdb": "a85e3898e6dc84fdcdc9e2f15f371003d214cf83b5597559461e63704f3570e8",
   "rfdiffusion/Attention_module.py": "31a5ef341c4128a2d45c35482626a7e977e01ae75f6db43eac2d672d02ef44db",
   "rfdiffusion/AuxiliaryPredictor.py": "d280c98ce174c0de4dd8f52920ec911ab182e1df526c30bb3efe1614498d9b8e",
   "rfdiffusion/Embeddings.py": "000641fd6f8ac77d5348a507a1474cbd414346708d6d75c4442fe5410ef29bee",

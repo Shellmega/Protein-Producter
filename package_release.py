@@ -90,7 +90,7 @@ def build(dest, wheelhouse, upstream):
     dest.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(dir=dest.parent,prefix="bundle-") as work:
         work=Path(work)
-        # Materialize exactly the 53 registered files including the upstream licenses.
+        # Materialize the registered model sources, default reference structure and licenses.
         tree=work/"upstream"
         prepare.source(tree,upstream)
         tmp=work/"product.zip"
