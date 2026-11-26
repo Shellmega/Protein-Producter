@@ -4,7 +4,7 @@
 
 ## 启动
 
-1. 在 [Releases](https://github.com/Shellmega/Protein-Producter/releases) 下载 Windows ZIP 并完整解压到可写目录。
+1. 下载 [Windows ZIP](https://github.com/Shellmega/Protein-Producter/raw/8a674421abb244f54d4a0ecd5db1290e7df2bad2/downloads/Protein-Producter-v0.1.0-Windows.zip) 并完整解压到可写目录。[SHA-256 校验文件](https://github.com/Shellmega/Protein-Producter/blob/8a674421abb244f54d4a0ecd5db1290e7df2bad2/downloads/SHA256SUMS.txt)
 2. 安装 64 位 Python 3.12（含 Tk）并准备支持 CUDA 12.8 的 NVIDIA GPU 驱动。首次在解压目录运行 `py -3.12 prepare.py`。安装器会下载锁定版本的运行时、PyTorch 和约 484 MB 的基础权重，并验证权重与上游代码。
 3. 双击 **Start.cmd**，在绘图区放置至少三个点，调整深度，点击“一键生成蛋白质”。模型会产生四份候选，从满足几何检查的结果中选取一份；有可用结果时会打开三维查看器。结果保存在 `GraphToProtein/local/gtp-model-desktop/jobs`。
 
