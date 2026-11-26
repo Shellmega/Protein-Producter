@@ -9,11 +9,12 @@ import subprocess
 import sys
 import time
 
-ROOT = Path(os.environ.get("GTP_PROJECT_DIR",Path(__file__).resolve().parents[1])).resolve()
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from adapters.gtp_curve.graph import validate_source_graph
 from adapters.gtp_curve.payload import build_condition_payload, validate_payload
 import product_runtime as runtime
+from model_setup import ensure_model
 from experiments.p3.metrics import geometry_gates, geometry_metrics, kabsch_rigid, parse_pdb
 
 LENGTH = 60
@@ -35,14 +36,6 @@ def write_json(path, value):
     tmp.write_bytes(data)
     os.replace(tmp, path)
     return hashlib.sha256(data).hexdigest()
-
-
-def check_installation():
-    for path in (runtime.GPU_PYTHON, runtime.TREE_DSH/"scripts/run_inference.py", runtime.WEIGHTS/"Base_ckpt.pt"):
-        if not path.is_file():
-            raise RuntimeError(f"这台电脑缺少本地模型组件：{path}")
-    if runtime.sha256_file(runtime.WEIGHTS/"Base_ckpt.pt") != WEIGHTS_HASH:
-        raise RuntimeError("本地模型权重与项目登记的 Base_ckpt.pt 不符。")
 
 
 def measure(pdb, condition):
@@ -117,9 +110,11 @@ def choose_candidate(candidates):
     return min(eligible, key=lambda c: (c["mean_distance"], c["path_mean_distance"], c["seed"]))
 
 
-def generate(graph, work):
+def generate(graph, work, status=lambda message: None):
     work = Path(work).resolve()
     condition = condition_for(graph)
+    from model_setup import ensure_model
+    ensure_model(status)
     work.mkdir(parents=True, exist_ok=False)
     graph_sha = write_json(work/"sketch.json", graph)
     condition_sha = write_json(work/"condition.json", condition)

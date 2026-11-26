@@ -1,15 +1,17 @@
 @echo off
 setlocal
-cd /d "%~dp0"
-if not exist "GraphToProtein\GraphToProtein.html" (
-  python prepare.py --studio-only
-  if errorlevel 1 goto failed
+cd /d "%~dp0" || exit /b 1
+set "PYTHONHOME="
+set "PYTHONPATH="
+set "PYTHONNOUSERSITE=1"
+set "PYTHONDONTWRITEBYTECODE=1"
+if not exist "runtime\python\python.exe" (
+  echo Please fully extract the Windows release ZIP, including the runtime folder.
+  pause
+  exit /b 1
 )
-set "GTP_PY=python"
-if exist "GraphToProtein\local\envs\dsh-gpu\Scripts\python.exe" set "GTP_PY=%CD%\GraphToProtein\local\envs\dsh-gpu\Scripts\python.exe"
-"%GTP_PY%" -B -X utf8 "GraphToProtein\demo\run.py" %*
+"runtime\python\python.exe" -B -s -X utf8 "GraphToProtein\demo\run.py" %*
 if not errorlevel 1 exit /b 0
-:failed
-echo Setup: py -3.12 prepare.py
+echo The studio could not start. See the message above.
 pause
 exit /b 1

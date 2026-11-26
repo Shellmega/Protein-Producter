@@ -11,7 +11,7 @@ from tkinter import filedialog, ttk
 from uuid import uuid4
 import webbrowser
 
-from sketch_model import CANDIDATES, ROOT, check_installation, generate
+from sketch_model import CANDIDATES, ROOT, generate
 
 
 def drawing_graph(points, key):
@@ -56,6 +56,7 @@ class Studio:
         directory.mkdir(parents=True, exist_ok=True)
         self.pool = ThreadPoolExecutor(max_workers=1)
         self.future = self.work = self.selected = None
+        self.stage = ""
         self.points, self.history = [], []
         self.axis = 0
         window.title("GraphToProtein · 从草图生成蛋白骨架")
@@ -207,17 +208,21 @@ class Studio:
         graph=drawing_graph(self.points,key)
         self.started=time.monotonic()
         self.status.set(f"本机模型正在为这张草图生成 {CANDIDATES} 份候选，再按轮廓偏差选取结果…")
+        self.stage="正在准备本次生成"
         self.future=self.pool.submit(self.run_model,graph,self.work)
         self.paint()
         self.window.after(350,self.check_result)
 
+    def stage_changed(self, message):
+        self.stage = message
+
     def run_model(self, graph, work):
-        generate(graph,work)
+        generate(graph,work,self.stage_changed)
         return result_page(self.template,work)
 
     def check_result(self):
         if not self.future.done():
-            self.status.set(f"正在生成和比较 {CANDIDATES} 份候选骨架… 已用 {int(time.monotonic()-self.started)} 秒")
+            self.status.set(f"{self.stage} · 已用 {int(time.monotonic()-self.started)} 秒")
             self.window.after(350,self.check_result)
             return
         try:
@@ -233,7 +238,6 @@ class Studio:
 
 
 def open_studio():
-    check_installation()
     window=tk.Tk()
     studio=Studio(window,ROOT/"local/gtp-model-desktop/jobs",Path(__file__).resolve().parents[1]/"GraphToProtein.html")
     window.mainloop()

@@ -4,7 +4,7 @@
 
 **在 Windows 上绘制一条三维空间折线，驱动本机 RFdiffusion 模型沿草图生成单链蛋白质骨架**
 
-[![Version](https://img.shields.io/badge/release-v0.1.0-15574e?style=flat-square)](https://github.com/Shellmega/Protein-Producter/releases)
+[![Version](https://img.shields.io/badge/release-v0.1.1-15574e?style=flat-square)](https://github.com/Shellmega/Protein-Producter/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078D6?style=flat-square&logo=windows)](https://github.com/Shellmega/Protein-Producter)
 [![Python](https://img.shields.io/badge/Python-3.12%20(64--bit)-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![CUDA](https://img.shields.io/badge/CUDA-12.8%20%7C%20PyTorch%202.7.1-76B900?style=flat-square&logo=nvidia&logoColor=white)](https://pytorch.org/)
@@ -68,25 +68,20 @@ flowchart LR
 | 组件 | 最低要求 | 说明 |
 | :--- | :--- | :--- |
 | **操作系统** | Windows 10 / 11 (64 位) | 需解压至**可写目录** |
-| **Python** | 64 位 Python 3.12（含 Tk） | 推理环境通过 `py -3.12 prepare.py` 自动创建独立 venv |
+| **Python** | Windows 包已带 64 位 Python 3.12 和 Tk | 完整解压即可绘图 |
 | **GPU 与驱动** | NVIDIA GPU + 支持 CUDA 12.8 的驱动 | 安装器自动部署 `torch==2.7.1+cu128` |
 | **Node.js**（仅开发/工作台） | Node.js ≥ 22.12 | 日常桌面绘图与推理**无需**安装 Node.js |
 
 ### 三步运行
 
 1. **下载并解压**
-   从 [Releases](https://github.com/Shellmega/Protein-Producter/releases) 下载 `Protein-Producter-v0.1.0-Windows.zip`，完整解压到可写目录。
+   从 [Releases](https://github.com/Shellmega/Protein-Producter/releases) 下载 `Protein-Producter-v0.1.1-Windows.zip`，完整解压到可写目录。
 
-2. **首次初始化本机 GPU 运行时**
-   在解压根目录打开终端执行：
-   ```powershell
-   py -3.12 prepare.py
-   ```
-   > [!NOTE]
-   > 安装器会自动拉取锁定版本的上游 RFdiffusion 代码、下载约 **484 MB** 的基础权重 `Base_ckpt.pt`、执行 **SHA-256 完整性校验**，并在 `GraphToProtein/local/envs/dsh-gpu` 创建隔离虚拟环境与 PyTorch CUDA 12.8 运行时。
+2. **双击 `Start.cmd`**
+   在绘图窗口放置至少三个点，可切到侧面调整深度。打开窗口可完全离线。
 
-3. **启动并生成蛋白质**
-   双击 **`Start.cmd`**，在正面画布点击放置至少 **3 个点**，切到侧面拖动节点调整深度，点击 **「一键生产蛋白质」**。模型生成 4 份候选并完成几何筛选后，会自动弹出三维结果页面。
+3. **点击「一键生成蛋白质」**
+   首次生成会自动准备 PyTorch CUDA 和模型权重，窗口显示进度。在线首次下载约 3.8 GB，建议预留 12 GB 空间。已有离线备份时，把新版解压到含 `offline` 文件夹的备份目录，程序会校验并使用其中的文件。通过几何检查的候选会在三维结果页打开。
 
 > [!TIP]
 > **仅想先体验绘图与查看界面（不跑模型）？**
@@ -100,7 +95,7 @@ flowchart LR
 | :--- | :--- | :--- |
 | `Start.cmd` | **日常推荐（桌面模式）** | 无端口原生窗口绘图，调用本机 GPU 推理，结果存入 `GraphToProtein/local/gtp-model-desktop/jobs` |
 | `Start.cmd --browser` | 本机浏览器模型模式 | 启动 `127.0.0.1:4178` 本地服务，在浏览器中绘图并提交推理（支持 `--port-offset` 与 `--stop`） |
-| `Start.cmd --fixture` | 固定样本联合工作台 | 启动 PTG + 接收端(8078) + 任务端(8079) + 预览端(4178) 联调环境，需 Node.js 与 `jsonschema==4.26.0` |
+| `Start.cmd --prepare-model` | 单独准备并验证 GPU | 可提前下载或使用已有离线文件；完成后可直接生成 |
 | 双击 `GraphToProtein.html` | 离线纯前端预览 | 仅支持绘图与查看示例，不执行本地模型推理 |
 
 ---
@@ -141,12 +136,8 @@ Protein-Producter/
   ```powershell
   python rebuild_studio.py
   ```
-* **离线环境安装**：
-  ```powershell
-  py -3.12 prepare.py --wheelhouse offline/wheels --weights offline/Base_ckpt.pt --upstream offline/RFdiffusion
-  ```
-* **复用已有 GTP 安装目录**：
-  启动前设置环境变量 `GTP_PROJECT_DIR` 指向已有 `GraphToProtein` 目录即可跳过重复安装。
+* **构建 Windows 便携包**：在含 Tcl/Tk 的 64 位 Windows Python 3.12 环境中，执行 `python package_release.py ..\Protein-Producter-v0.1.1-Windows.zip`。离线构建可指定 `--wheelhouse` 和 `--upstream`。
+* **迁移已安装的副本**：关闭应用并复制整个解压目录到新位置，再双击 `Start.cmd`。生成记录和安装成功的模型环境都使用相对路径。
 
 ---
 
@@ -158,3 +149,4 @@ Protein-Producter/
   * `PhotoToGraph/apps/web/THIRD_PARTY_NOTICES.md`
   * `GraphToProtein/apps/import_preview/THIRD_PARTY_NOTICES.md`
   * `GraphToProtein/runtime/upstream-overlay/`
+

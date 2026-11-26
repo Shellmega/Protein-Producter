@@ -8,7 +8,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 import webbrowser
 
-from sketch_model import ROOT, check_installation, condition_for, generate, write_json
+from sketch_model import ROOT, condition_for, generate, write_json
 
 ID = re.compile(r"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}")
 
@@ -140,7 +140,6 @@ def serve(port, no_browser=False, stop=False):
     page = (Path(__file__).resolve().parents[1]/"GraphToProtein.html").read_bytes()
     if b'data-gtp-model="live"' not in page:
         raise RuntimeError("请先重新构建本地模型绘图页 GraphToProtein.html")
-    check_installation()
     home = f"http://127.0.0.1:{port}/demo/"
     with ThreadingHTTPServer(("127.0.0.1",port),Handler) as server:
         server.page = page

@@ -69,50 +69,23 @@ def source(tree, upstream):
         if zip_source:
             zip_source.close()
 
-def weights(local):
-    dest = APP / "weights/rfdiffusion/Base_ckpt.pt"
-    if dest.is_file() and digest(dest)==WEIGHT_SHA:
-        return
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(dir=dest.parent, delete=False) as f:
-        tmp = Path(f.name)
-    try:
-        with (local.open("rb") if local else urllib.request.urlopen(WEIGHT_URL,timeout=120)) as src, tmp.open("wb") as file:
-            shutil.copyfileobj(src,file)
-        if digest(tmp)!=WEIGHT_SHA:
-            raise ValueError("Base checkpoint SHA-256 differs")
-        tmp.replace(dest)
-    finally:
-        tmp.unlink(missing_ok=True)
-
 def main():
-    args = argparse.ArgumentParser(description=__doc__)
+    args = argparse.ArgumentParser(description="Prepare the portable Windows studio.")
     args.add_argument("--studio-only", action="store_true")
-    args.add_argument("--wheelhouse", type=Path)
-    args.add_argument("--weights", type=Path)
-    args.add_argument("--upstream", type=Path)
-    a=args.parse_args()
+    args.add_argument("--offline", type=Path, help="Directory containing wheels/ and Base_ckpt.pt")
+    options = args.parse_args()
     studio()
-    if a.studio_only:
+    if options.studio_only:
         print(APP/"GraphToProtein.html")
         return
-    if sys.platform!="win32" or sys.version_info[:2]!=(3,12):
-        raise SystemExit("For the GPU runtime use 64-bit Windows Python 3.12: py -3.12 prepare.py")
-    source(APP/"local/work/RFdiffusion_dsh_gpu",a.upstream)
-    weights(a.weights)
-    venv=APP/"local/envs/dsh-gpu"
-    python=venv/"Scripts/python.exe"
+    python = ROOT/"runtime/python/python.exe"
     if not python.is_file():
-        subprocess.run([sys.executable,"-m","venv",str(venv)],check=True)
-    pip=[str(python),"-m","pip","install"]
-    options=["--no-index","--find-links",str(a.wheelhouse.resolve())] if a.wheelhouse else []
-    lock=APP/"experiments/p2/dsh_gpu/requirements-gpu.lock.txt"
-    subprocess.run(pip+options+["setuptools==84.2.1","wheel==0.48.0","packaging==26.3"],check=True)
-    subprocess.run(pip+options+["--no-build-isolation","-r",str(lock)],check=True)
-    torch_options=options or ["--index-url","https://download.pytorch.org/whl/cu128"]
-    subprocess.run(pip+torch_options+["torch==2.7.1+cu128"],check=True)
-    subprocess.run([str(python),"-c","import torch; assert torch.cuda.is_available(), 'CUDA GPU unavailable'; print(torch.cuda.get_device_name(0))"],check=True)
-    print("Ready. Open Start.cmd.")
+        raise SystemExit("Download and extract the Windows release ZIP first.")
+    import os
+    env = os.environ.copy()
+    if options.offline:
+        env["PTG_OFFLINE_DIR"] = str(options.offline.resolve())
+    subprocess.run([str(python),"-B","-s","-X","utf8",str(APP/"demo/run.py"),"--prepare-model"],env=env,check=True)
 
 if __name__=="__main__":
     main()
